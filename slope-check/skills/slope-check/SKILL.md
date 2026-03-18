@@ -1,7 +1,7 @@
 ---
 name: slope-check
 description: Audit an AI paper, GitHub repo, or product page against its quantitative claims. Produces a structured slope report with confidence scores and charts. Invoke when the user asks to "verify claims", "check benchmarks", "audit results", "slope check", "reproduce results", or any similar request about whether an AI tool's performance claims are accurate.
-arguments: "<url-or-path> [<url-or-path>...] [--run]"
+arguments: "<url> [<url>...] [--run]"
 ---
 
 # /slope-check
@@ -11,7 +11,7 @@ Audits one or more sources against their quantitative claims.
 ## Usage
 
 ```
-/slope-check <url-or-path> [<url-or-path>...] [--run]
+/slope-check <url> [<url>...] [--run]
 ```
 
 **Arguments:**
