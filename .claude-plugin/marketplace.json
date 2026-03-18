@@ -15,7 +15,7 @@
         "name": "kazakhpunk",
         "url": "https://github.com/kazakhpunk"
       },
-      "source": ".",
+      "source": "./slope-check",
       "category": "research"
     }
   ]
