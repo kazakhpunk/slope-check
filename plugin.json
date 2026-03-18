@@ -1,0 +1,19 @@
+{
+  "name": "slope-check",
+  "version": "0.1.0",
+  "description": "Audit AI papers, repos, and product pages against their quantitative claims. Produces a structured slope report with confidence scores and charts.",
+  "skills": [
+    ".claude/skills/slope-check/SKILL.md"
+  ],
+  "agents": [
+    ".claude/agents/claim-extractor.md",
+    ".claude/agents/static-auditor.md",
+    ".claude/agents/chart-generator.md",
+    ".claude/agents/env-replicator.md",
+    ".claude/agents/benchmark-runner.md",
+    ".claude/agents/slope-reporter.md"
+  ],
+  "hooks": [
+    ".claude/hooks/settings.json"
+  ]
+}
