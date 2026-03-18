@@ -17,4 +17,20 @@ claude plugin install slope-check@kazakhpunk-slope-check
 /slope-check <url-or-path> [--run]
 ```
 
+### Examples
+
+```
+# Audit a GitHub repo's README claims
+/slope-check https://github.com/qdrant/fastembed
+
+# Audit an arxiv paper
+/slope-check https://arxiv.org/abs/2310.01469
+
+# Audit both repo and paper together
+/slope-check https://github.com/qdrant/fastembed https://arxiv.org/abs/2310.01469
+
+# Include live benchmark replication attempt
+/slope-check https://github.com/qdrant/fastembed --run
+```
+
 See [slope-check/README.md](./slope-check/README.md) for full documentation.
