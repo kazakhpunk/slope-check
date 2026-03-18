@@ -37,7 +37,8 @@ Create the output directory: `slope-reports/{project-slug}/`
 **GitHub repo:**
 - Use WebFetch to read: README.md (try common raw URL patterns), docs/ index, any linked paper
 - If a paper URL is linked in the README, fetch it as supplementary context (not a separate source)
-- Record `repo_local_path` as null for GitHub repos (cloning is not performed in static mode)
+- Record `repo_local_path` as null for GitHub repos (cloning is deferred to env-replicator in --run mode)
+- Record `repo_url` with the full GitHub repo URL (e.g., `https://github.com/owner/repo`) so env-replicator can clone it when needed
 
 **arxiv/paper URL:**
 - Use WebFetch to fetch the abstract and paper content
@@ -98,6 +99,7 @@ Write to `slope-reports/{project-slug}/claims.json`. This file is read-only afte
     "methodology_stated": false,
     "cross_ref_target": "sentence-transformers benchmark",
     "source_type": "repo",
+    "repo_url": "https://github.com/user/repo",
     "repo_local_path": null,
     "conflict": false
   }

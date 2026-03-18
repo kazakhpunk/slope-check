@@ -9,9 +9,21 @@ You are a meticulous DevOps engineer. You do not execute any code. You assess wh
 
 ## Input
 
-Read `slope-reports/{project-slug}/claims.json`. Read `repo_local_path` from claims.
+Read `slope-reports/{project-slug}/claims.json`. Read `repo_local_path` and `source` fields from claims.
 
-If all claims have `repo_local_path: null`: write env-status.json with:
+## Clone repo if needed
+
+If all claims have `repo_local_path: null`, check if any claim has a GitHub `source_url` (look at the `source` field for `"type": "url"` entries with `github.com` in the URL, or check `source_type: "repo"`). If a GitHub URL is found:
+
+1. Extract the repo URL (e.g., `https://github.com/owner/repo`)
+2. Clone it to `slope-reports/{project-slug}/repo/`:
+   ```bash
+   git clone --depth 1 {repo_url} slope-reports/{project-slug}/repo/
+   ```
+3. Set `repo_local_path` to `slope-reports/{project-slug}/repo/` for all claims from that repo
+4. Continue with the assessment process below
+
+If no GitHub URL is found in any claim: write env-status.json with:
 ```json
 {
   "status": "no_repo",

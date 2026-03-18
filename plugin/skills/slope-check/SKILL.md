@@ -89,9 +89,17 @@ After benchmark-runner completes: invoke chart-generator in runmerge mode to ove
 
 After all prior agents complete: invoke slope-reporter.
 
-### Step 7: Present summary to user
+### Step 7: Present summary and charts to user
 
-After slope-reporter completes, print to the terminal:
+After slope-reporter completes:
+
+1. **Display charts inline**: Use the Read tool to read both PNG files so they render in the Claude Code terminal:
+   - `slope-reports/{project-slug}/charts/slope-bar.png`
+   - `slope-reports/{project-slug}/charts/red-flags.png`
+
+2. **Open charts in system viewer**: Run `open slope-reports/{project-slug}/charts/slope-bar.png slope-reports/{project-slug}/charts/red-flags.png` so the user can view them at full resolution.
+
+3. **Print summary**:
 
 ```
 Slope Check Complete
@@ -103,6 +111,7 @@ Confidence: {level}
 {one-sentence summary from report}
 
 Full report: slope-reports/{project-slug}/slope-report.md
+Charts: slope-reports/{project-slug}/charts/
 ```
 
 If the slope score is N/A (all claims unverifiable): note that explicitly.
