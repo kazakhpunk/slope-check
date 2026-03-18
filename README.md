@@ -33,4 +33,4 @@ claude plugin install slope-check@kazakhpunk-slope-check
 /slope-check https://github.com/qdrant/fastembed --run
 ```
 
-See [slope-check/README.md](./slope-check/README.md) for full documentation.
+See [plugin/README.md](./plugin/README.md) for full documentation.
