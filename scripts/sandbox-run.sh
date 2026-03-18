@@ -2,7 +2,7 @@
 # sandbox-run.sh — isolated benchmark execution wrapper
 # Usage: sandbox-run.sh <output_json> <working_dir> <command> [args...]
 
-set -uo pipefail
+set -euo pipefail
 
 if [ $# -lt 3 ]; then
   echo "Usage: sandbox-run.sh <output_json> <working_dir> <command> [args...]" >&2
@@ -23,32 +23,40 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Cross-platform millisecond timing
-start_time() { python3 -c "import time; print(int(time.time()*1000))"; }
-START_MS=$(start_time)
+START_MS=$(python3 -c "import time; print(int(time.time()*1000))")
 
+set +e
 (
   cd "$WORKING_DIR"
   ulimit -v $((2 * 1024 * 1024)) 2>/dev/null || true
   timeout 300 "${CMD[@]}" >"$STDOUT_FILE" 2>"$STDERR_FILE"
 )
 EXIT_CODE=$?
+set -e
 
-END_MS=$(start_time)
+END_MS=$(python3 -c "import time; print(int(time.time()*1000))")
 DURATION_MS=$((END_MS - START_MS))
 
-python3 - <<PYEOF
-import json
-with open("$STDOUT_FILE") as f:
+SANDBOX_EXIT="$EXIT_CODE" \
+SANDBOX_DURATION="$DURATION_MS" \
+SANDBOX_STDOUT="$STDOUT_FILE" \
+SANDBOX_STDERR="$STDERR_FILE" \
+SANDBOX_OUTPUT="$OUTPUT_JSON" \
+python3 - <<'PYEOF'
+import json, os
+
+with open(os.environ["SANDBOX_STDOUT"]) as f:
     stdout = f.read(102400)
-with open("$STDERR_FILE") as f:
+with open(os.environ["SANDBOX_STDERR"]) as f:
     stderr = f.read(10240)
+
 data = {
-    "exit_code": $EXIT_CODE,
-    "duration_ms": $DURATION_MS,
+    "exit_code": int(os.environ["SANDBOX_EXIT"]),
+    "duration_ms": int(os.environ["SANDBOX_DURATION"]),
     "stdout": stdout,
     "stderr": stderr
 }
-with open("$OUTPUT_JSON", "w") as f:
+
+with open(os.environ["SANDBOX_OUTPUT"], "w") as f:
     json.dump(data, f, indent=2)
 PYEOF
