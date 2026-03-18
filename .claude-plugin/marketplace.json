@@ -10,7 +10,7 @@
     {
       "name": "slope-check",
       "description": "Audit AI papers, repos, and product pages against their quantitative claims. Produces a structured slope report with reproducibility confidence scores, verdict per claim (VERIFIED/PARTIAL/WEAK/REFUTED/UNVERIFIABLE), and charts. 'Slope' is the gap between what is promised and what is real.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "kazakhpunk",
         "url": "https://github.com/kazakhpunk"
