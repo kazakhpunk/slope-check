@@ -50,12 +50,16 @@ For the Claims table, tag each claim:
 - `LIVE`: results.json exists and the claim has `status: measured`
 - `STATIC`: all other cases
 
-Embed charts inline using base64:
+## Embedding charts
+
+The .b64 files contain the full data URI string including the `data:image/png;base64,` prefix. Use the file contents directly as the image src attribute:
+
 ```
-![Slope Bar Chart](data:image/png;base64,{contents of charts/slope-bar.png.b64 without the data:image/png;base64, prefix})
+![Slope Bar Chart]({full contents of charts/slope-bar.png.b64})
+![Red Flag Distribution]({full contents of charts/red-flags.png.b64})
 ```
 
-If charts do not exist (e.g., no numeric claims): omit the Charts section.
+If charts do not exist (e.g., no numeric claims or chart-generator was not run): omit the Charts section.
 
 ## Novel pattern detection
 
