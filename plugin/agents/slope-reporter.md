@@ -50,16 +50,30 @@ For the Claims table, tag each claim:
 - `LIVE`: results.json exists and the claim has `status: measured`
 - `STATIC`: all other cases
 
-## Embedding charts
+## Charts section
 
-The .b64 files contain the full data URI string including the `data:image/png;base64,` prefix. Use the file contents directly as the image src attribute:
+Reference the chart PNGs by relative path in the report:
 
 ```
-![Slope Bar Chart]({full contents of charts/slope-bar.png.b64})
-![Red Flag Distribution]({full contents of charts/red-flags.png.b64})
+![Slope Bar Chart](charts/slope-bar.png)
+![Red Flag Distribution](charts/red-flags.png)
 ```
 
 If charts do not exist (e.g., no numeric claims or chart-generator was not run): omit the Charts section.
+
+## Limitations section
+
+Always include the following section at the end of the report, before any novel pattern appendices:
+
+```markdown
+## Limitations
+
+- **Hardware variance**: Benchmarks in the source were run on specific hardware (as noted per claim). Performance results may differ significantly on different hardware configurations.
+- **Dataset scope**: Claims were evaluated against the datasets provided in the source repository. Results may not generalize to other datasets or workloads.
+- **Static analysis**: Confidence scores reflect static code and documentation analysis. They do not measure actual runtime performance unless --run mode was used.
+- **Version drift**: The source repository may have changed since this audit was conducted. Audit date: {date}.
+- **AI-generated audit**: This report was produced by an AI agent pipeline. Findings should be reviewed and verified by domain experts before being cited or acted upon.
+```
 
 ## Novel pattern detection
 
