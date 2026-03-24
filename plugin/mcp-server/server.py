@@ -12,11 +12,16 @@ REPORTS_DIR = Path(os.environ.get("SLOPE_REPORTS_DIR", "slope-reports"))
 
 
 def _read_json(slug: str, filename: str) -> list | dict | None:
-    path = REPORTS_DIR / slug / filename
+    path = (REPORTS_DIR / slug / filename).resolve()
+    if not path.is_relative_to(REPORTS_DIR.resolve()):
+        return None
     if not path.exists():
         return None
-    with open(path) as f:
-        return json.load(f)
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
 
 
 def _parse_report_header(slug: str) -> dict:
@@ -190,8 +195,8 @@ def compare_audits(slug_a: str, slug_b: str) -> dict:
     verdicts_a = _extract_verdicts(slug_a)
     verdicts_b = _extract_verdicts(slug_b)
 
-    scores_a = {e["id"]: e.get("confidence_score", 0) for e in audit_a}
-    scores_b = {e["id"]: e.get("confidence_score", 0) for e in audit_b}
+    scores_a = {e["id"]: e.get("confidence_score", 0) for e in audit_a if "id" in e}
+    scores_b = {e["id"]: e.get("confidence_score", 0) for e in audit_b if "id" in e}
 
     ids_a = set(scores_a.keys())
     ids_b = set(scores_b.keys())

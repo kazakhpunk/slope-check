@@ -74,12 +74,13 @@ print(sum(1 for e in data if e.get('status') == 'measured'))
 }
 
 # --- Emit progress for new files ---
-if [[ -f "$SLUG_DIR/claims.json" ]]; then
+# Only compute counts when the file is new (not yet in .progress-seen).
+if [[ -f "$SLUG_DIR/claims.json" ]] && ! grep -qxF "claims.json" "$SEEN_FILE" 2>/dev/null; then
     N=$(jcount "$SLUG_DIR/claims.json")
     report_if_new "claims.json" "claim-extractor: $N claims extracted"
 fi
 
-if [[ -f "$SLUG_DIR/audit.json" ]]; then
+if [[ -f "$SLUG_DIR/audit.json" ]] && ! grep -qxF "audit.json" "$SEEN_FILE" 2>/dev/null; then
     N=$(jcount "$SLUG_DIR/audit.json")
     RF=$(red_flag_count "$SLUG_DIR/audit.json")
     report_if_new "audit.json" "static-auditor: $N claims scored, $RF red flags found"
@@ -89,12 +90,12 @@ if [[ -f "$SLUG_DIR/charts/slope-bar.png" ]]; then
     report_if_new "charts/slope-bar.png" "chart-generator: charts rendered"
 fi
 
-if [[ -f "$SLUG_DIR/env-status.json" ]]; then
+if [[ -f "$SLUG_DIR/env-status.json" ]] && ! grep -qxF "env-status.json" "$SEEN_FILE" 2>/dev/null; then
     COUNTS=$(env_counts "$SLUG_DIR/env-status.json")
     report_if_new "env-status.json" "env-replicator: $COUNTS"
 fi
 
-if [[ -f "$SLUG_DIR/results.json" ]]; then
+if [[ -f "$SLUG_DIR/results.json" ]] && ! grep -qxF "results.json" "$SEEN_FILE" 2>/dev/null; then
     N=$(result_count "$SLUG_DIR/results.json")
     report_if_new "results.json" "benchmark-runner: $N benchmarks executed"
 fi
