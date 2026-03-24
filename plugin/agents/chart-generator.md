@@ -18,101 +18,136 @@ Create `slope-reports/{project-slug}/charts/` directory if it does not exist.
 
 Write a Python script to `slope-reports/{project-slug}/generate_charts.py` and execute it with `python3`. Pass the mode as an environment variable: `CHART_MODE=static` or `CHART_MODE=runmerge`.
 
-### Styling (apply to ALL charts)
+### Design System
 
-Use this exact matplotlib configuration for a polished dark theme:
+The charts use a restrained, high-contrast dark theme inspired by Bloomberg Terminal and Linear. Every visual choice should feel intentional and minimal. When in doubt, remove rather than add.
 
 ```python
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as pe
 from matplotlib import rcParams
+import numpy as np
 
-# Dark theme colors
-BG_DARK = '#0d1117'
-BG_CARD = '#161b22'
-TEXT_PRIMARY = '#e6edf3'
-TEXT_SECONDARY = '#8b949e'
-GRID_COLOR = '#21262d'
-BORDER_COLOR = '#30363d'
-
-# Verdict colors
-COLOR_VERIFIED = '#3fb950'    # green
-COLOR_PARTIAL = '#d29922'     # amber
-COLOR_WEAK = '#f85149'        # red
-COLOR_REFUTED = '#da3633'     # dark red
-COLOR_GREY_BAR = '#30363d'    # baseline grey
-
-# Red flag palette
-FLAG_COLORS = {
-    'hardcoded_result': '#f85149',
-    'missing_eval_script': '#f0883e',
-    'missing_dataset': '#d29922',
-    'weak_baseline': '#3fb950',
-    'no_error_bars': '#58a6ff',
-    'methodology_mismatch': '#bc8cff',
-    'single-batch-latency': '#f0883e',
-    'mteb-subset-cherry-picking': '#d29922',
-    'internal-numeric-inconsistency': '#f85149',
-}
+# --- Palette ---
+BG = '#0c0e12'
+SURFACE = '#13161c'
+TEXT = '#c9d1d9'
+TEXT_MUTED = '#484f58'
+TEXT_DIM = '#30363d'
+ACCENT = '#58a6ff'          # primary blue
+ACCENT_STRONG = '#79c0ff'   # high-confidence blue
+ACCENT_MID = '#388bfd'      # mid-confidence blue
+ACCENT_WEAK = '#1f3a5f'     # low-confidence blue (muted)
+DANGER = '#f85149'           # refuted / critical flags
+BORDER = '#1b1f27'
+RULE = '#21262d'
 
 def confidence_color(score):
-    if score >= 80: return COLOR_VERIFIED
-    if score >= 50: return COLOR_PARTIAL
-    return COLOR_WEAK
+    """Single blue family — intensity maps to confidence."""
+    if score >= 80: return ACCENT_STRONG
+    if score >= 50: return ACCENT
+    if score >= 30: return ACCENT_MID
+    return ACCENT_WEAK
 
-# Global style
+def verdict_color(verdict):
+    """Verdict label colors — subtle, not the bar color."""
+    v = (verdict or '').upper()
+    if v == 'VERIFIED': return '#3fb950'
+    if v == 'PARTIAL': return '#d29922'
+    if v == 'REFUTED': return DANGER
+    if v == 'UNVERIFIABLE': return TEXT_MUTED
+    return TEXT_MUTED  # WEAK
+
+# --- Global rcParams ---
 rcParams.update({
-    'figure.facecolor': BG_DARK,
-    'axes.facecolor': BG_CARD,
-    'axes.edgecolor': BORDER_COLOR,
-    'axes.labelcolor': TEXT_PRIMARY,
-    'axes.grid': True,
-    'grid.color': GRID_COLOR,
-    'grid.alpha': 0.5,
-    'grid.linewidth': 0.5,
-    'text.color': TEXT_PRIMARY,
-    'xtick.color': TEXT_SECONDARY,
-    'ytick.color': TEXT_SECONDARY,
+    'figure.facecolor': BG,
+    'axes.facecolor': BG,
+    'axes.edgecolor': 'none',
+    'axes.labelcolor': TEXT_MUTED,
+    'axes.grid': False,
+    'text.color': TEXT,
+    'xtick.color': TEXT_MUTED,
+    'ytick.color': TEXT_MUTED,
     'xtick.labelsize': 9,
     'ytick.labelsize': 9,
     'font.family': 'sans-serif',
-    'font.sans-serif': ['Helvetica Neue', 'Helvetica', 'DejaVu Sans'],
+    'font.sans-serif': ['Inter', 'SF Pro Display', 'Helvetica Neue', 'Helvetica', 'DejaVu Sans'],
     'font.size': 10,
-    'figure.dpi': 150,
-    'savefig.dpi': 150,
+    'figure.dpi': 300,
+    'savefig.dpi': 300,
     'savefig.bbox': 'tight',
-    'savefig.pad_inches': 0.3,
-    'savefig.facecolor': BG_DARK,
+    'savefig.pad_inches': 0.5,
+    'savefig.facecolor': BG,
 })
 ```
 
-### Chart 1: Slope Bar Chart (slope-bar.png)
+### Chart 1: Confidence Score (slope-bar.png)
 
-- Figure size: `(max(10, len(claims) * 1.4), 5)`
-- X-axis: claim IDs (e.g., C01, C02 — abbreviated)
-- Y-axis: 0-100 scale, label "Confidence (%)"
-- Bar A (always): rendered at 100, color `COLOR_GREY_BAR`, alpha 0.3, label "Claimed (100%)". Omit for non-numeric claims (value is null); add "NON-NUMERIC" text annotation at x position instead.
-- Bar B (always): Reproducibility Confidence Score (0-100), colored by `confidence_color()`, with rounded top edges (`plt.bar(..., linewidth=0)`). If data_quality is "insufficient": render as hatched bar with "?" label.
-- Bar C (runmerge mode only): `(actual_value / claimed_value) * 100`. Omit if actual_value is null or claimed_value is 0. Use a thin outline bar overlaid.
-- Add value labels on top of each confidence bar (white text, 8pt, bold)
-- Add a subtle horizontal dashed line at y=80 (VERIFIED threshold) and y=50 (PARTIAL threshold), with small right-aligned labels
-- Title: "Slope Report: Claimed vs Confidence" — left-aligned, 14pt, bold
-- Subtitle below title: project name and date in TEXT_SECONDARY, 10pt
-- Remove top and right spines
-- X-axis labels rotated 0 degrees (horizontal), use abbreviated IDs
+Horizontal bar chart. Claims on Y-axis (top to bottom, sorted by confidence descending). Bars extend right from 0 to the confidence score.
 
-### Chart 2: Red Flag Distribution (red-flags.png)
+**Layout:**
+- Figure size: `(10, max(4, len(claims) * 0.55))`
+- Horizontal bars, height 0.45, with 2px rounded caps via `matplotlib.patches.FancyBboxPatch` or `bar(..., linewidth=0)` with clipping
+- Left margin: claim labels (C01, C02, etc.) in `TEXT_MUTED`, 9pt, monospace-style alignment
+- Bars colored by `confidence_color(score)` — single blue family, intensity = confidence
+- Score value as white text at the end of each bar (inside if bar is long enough, outside if short). 9pt, semibold.
+- Verdict label (VERIFIED, PARTIAL, WEAK, REFUTED, UNVERIFIABLE) right-aligned at x=105 area, colored by `verdict_color()`, 8pt, uppercase
 
-- Figure size: `(max(10, len(claims) * 1.4), 4)`
-- X-axis: claim IDs (abbreviated as C01, C02)
-- Y-axis: count of red flag signals triggered, integer ticks only
-- Stacked bar segments by red flag type, using `FLAG_COLORS` dict (fall back to `#8b949e` for unknown types)
-- Bar width 0.5, slight rounded appearance
-- Legend: horizontal, below chart, small font (8pt), no frame, TEXT_SECONDARY color
-- Title: "Red Flag Distribution" — left-aligned, 14pt, bold
-- Remove top and right spines
-- If a claim has zero flags, leave gap (no bar)
+**Threshold zones:**
+- Two subtle vertical bands as background fills (not lines):
+  - x=0 to x=50: no fill (implied weak zone)
+  - x=50 to x=80: subtle fill `ACCENT_WEAK` at alpha 0.06
+  - x=80 to x=100: subtle fill `ACCENT_WEAK` at alpha 0.12
+- Small labels "PARTIAL" at x=50 and "VERIFIED" at x=80, top of chart, in `TEXT_DIM`, 7pt
+
+**Runmerge overlay (--run mode only):**
+- For claims with actual results: add a thin vertical marker (diamond or short horizontal tick) at `(actual_value / claimed_value) * 100` position, color `DANGER` if below confidence, `#3fb950` if at or above
+- Small "actual" label next to marker, 7pt
+
+**Title block:**
+- Title: "Confidence Scores" — 15pt, semibold, `TEXT`, left-aligned with generous top padding
+- Subtitle: "{project-name} — {date}" — 10pt, `TEXT_MUTED`, directly below title
+- 16px gap between subtitle and first bar
+
+**Axes:**
+- X-axis: 0 to 100, ticks at 0, 25, 50, 75, 100 only. Thin tick marks, no axis line.
+- Y-axis: no axis line, no ticks. Just the labels.
+- No grid lines. One subtle horizontal rule (`RULE` color, 0.5px) between each claim for scanability.
+- Remove all spines.
+
+**Data quality:**
+- If `data_quality` is "insufficient": bar rendered in `TEXT_DIM` with diagonal hatch pattern, "?" instead of score value
+
+### Chart 2: Red Flag Matrix (red-flags.png)
+
+Dot matrix (not stacked bars). Claims on Y-axis, flag types on X-axis. Filled circle = flag present, empty circle = flag absent.
+
+**Layout:**
+- Figure size: `(max(8, num_flag_types * 1.2), max(3.5, len(claims) * 0.45))`
+- Claims on Y-axis (same order as Chart 1 — sorted by confidence descending)
+- Flag types on X-axis, labels rotated 35 degrees, 8pt, `TEXT_MUTED`
+- Use `pattern_id` field for flag identification when available (more specific than `type`). Fall back to `type` if `pattern_id` is null. This means "mteb-subset-cherry-picking" instead of generic "methodology_mismatch".
+- Clean flag labels: replace underscores/hyphens with spaces, title case (e.g., "mteb-subset-cherry-picking" → "Mteb Subset Cherry Picking")
+
+**Dots:**
+- Filled circle: `DANGER` color (#f85149), size 80 (scatter marker size)
+- Empty position: small circle outline in `TEXT_DIM`, size 30, linewidth 0.5
+- This creates a scannable presence/absence grid
+
+**Title block:**
+- Title: "Red Flags" — 15pt, semibold, `TEXT`, left-aligned
+- Subtitle: "{count} flags across {n} claims" — 10pt, `TEXT_MUTED`
+
+**Axes:**
+- No grid, no spines, no axis lines
+- Subtle horizontal rules between claims (same as Chart 1)
+- If a flag type has zero occurrences across all claims, omit it from the X-axis entirely
+
+**Edge cases:**
+- If zero red flags total: generate a minimal chart with centered text "No red flags detected" in `TEXT_MUTED`, 12pt
+- Only show flag types that actually appear in the data (no empty columns)
 
 ### After generating PNGs
 
@@ -120,7 +155,7 @@ Do NOT generate base64 files. They are not needed — Claude Code displays PNGs 
 
 ## Output
 
-- `slope-reports/{project-slug}/charts/slope-bar.png` (150dpi, optimized for inline terminal display)
-- `slope-reports/{project-slug}/charts/red-flags.png` (150dpi)
+- `slope-reports/{project-slug}/charts/slope-bar.png` (300dpi)
+- `slope-reports/{project-slug}/charts/red-flags.png` (300dpi)
 
 In runmerge mode, these files are overwritten in-place. This is the only exception to the rule that agents do not modify files written by prior agents.
