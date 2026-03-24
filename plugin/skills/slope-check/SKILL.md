@@ -51,6 +51,13 @@ With `--run`: also attempts to set up the environment and execute benchmark scri
 
 ### Step 1: claim-extractor
 
+Before invoking claim-extractor, write the project slug to a marker file so the progress hook can find the active audit directory:
+
+```bash
+mkdir -p slope-reports
+echo "{project-slug}" > slope-reports/.current-slug
+```
+
 Invoke the claim-extractor agent with all provided source URLs/paths (excluding the `--run` flag).
 
 After it completes: check if `slope-reports/{project-slug}/inconclusive.txt` exists. If it does: stop and inform the user:
@@ -115,3 +122,16 @@ Charts: slope-reports/{project-slug}/charts/
 ```
 
 If the slope score is N/A (all claims unverifiable): note that explicitly.
+
+4. **Print follow-up hint**:
+
+```
+Audit complete for {project-slug}. You can ask follow-up questions about claims, verdicts, or red flags.
+```
+
+5. **Clean up slug marker**:
+
+```bash
+rm -f slope-reports/.current-slug
+rm -f slope-reports/{project-slug}/.progress-seen
+```
